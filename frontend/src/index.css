@@ -1,0 +1,109 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "./styles/glacial.css";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand: #0b7285;
+  --color-brand-hover: #085c6b;
+  --color-brand-soft: #dff4f5;
+
+  --color-yearbook: #9a7435;
+  --color-yearbook-soft: #f7f0e3;
+  --color-yearbook-ink: #49391f;
+
+  --color-bg: #f6f8f9;
+  --color-surface: #ffffff;
+  --color-border: #dce5e7;
+  --color-text: #172326;
+  --color-text-secondary: #647579;
+
+  --color-success: #2f7d4f;
+  --color-warning: #b7791f;
+  --color-danger: #c0392b;
+  --color-danger-soft: #fbeae8;
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-brand-soft);
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes float-a {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(-4deg); }
+}
+@keyframes float-b {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(10px) rotate(3deg); }
+}
+@keyframes float-c {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(5deg); }
+}
+.animate-float-a { animation: float-a 6s ease-in-out infinite; }
+.animate-float-b { animation: float-b 7.5s ease-in-out infinite; }
+.animate-float-c { animation: float-c 5s ease-in-out infinite; }
+
+.yearbook-serif {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+
+@keyframes cb-spin {
+  to { transform: rotate(360deg); }
+}
+.animate-cb-spin { animation: cb-spin 0.75s linear infinite; }
+.rounded-inherit { border-radius: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cb-spin { animation: none; }
+}
+
+/* =========================================================
+   COLLEGEBOOK MULTI-COLOUR THEME SYSTEM
+   ========================================================= */
+:root,
+:root[data-theme="collegebook"] {
+  --color-brand: #0b7285;
+  --color-brand-hover: #085c6b;
+  --color-brand-soft: #dff4f5;
+}
+
+:root[data-theme="ocean"] { --color-brand: #2563eb; --color-brand-hover: #1d4ed8; --color-brand-soft: #dbeafe; }
+:root[data-theme="royal"] { --color-brand: #4f46e5; --color-brand-hover: #4338ca; --color-brand-soft: #e0e7ff; }
+:root[data-theme="violet"] { --color-brand: #7c3aed; --color-brand-hover: #6d28d9; --color-brand-soft: #ede9fe; }
+:root[data-theme="rose"] { --color-brand: #e11d48; --color-brand-hover: #be123c; --color-brand-soft: #ffe4e6; }
+:root[data-theme="emerald"] { --color-brand: #059669; --color-brand-hover: #047857; --color-brand-soft: #d1fae5; }
+:root[data-theme="green"] { --color-brand: #15803d; --color-brand-hover: #166534; --color-brand-soft: #dcfce7; }
+:root[data-theme="amber"] { --color-brand: #c47f12; --color-brand-hover: #a16207; --color-brand-soft: #fef3c7; }
+:root[data-theme="coral"] { --color-brand: #ea580c; --color-brand-hover: #c2410c; --color-brand-soft: #ffedd5; }
+:root[data-theme="slate"] { --color-brand: #475569; --color-brand-hover: #334155; --color-brand-soft: #e2e8f0; }
+
+.theme-swatch { box-shadow: inset 0 0 0 2px rgba(255,255,255,.85), 0 0 0 1px rgba(20,40,45,.10); }
