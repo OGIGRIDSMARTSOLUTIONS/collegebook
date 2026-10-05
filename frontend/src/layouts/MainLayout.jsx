@@ -74,26 +74,8 @@ export function MainLayout() {
   const { theme, setTheme, themes } = useTheme();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  // Full placeholder only where it fits (sm and up); phones get "Search".
-  const [wideSearch, setWideSearch] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches
-  );
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 640px)");
-    const onChange = (e) => setWideSearch(e.matches);
-    mq.addEventListener?.("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  function submitSearch(e) {
-    e.preventDefault();
-    const term = searchTerm.trim();
-    if (!term) return;
-    navigate(`/network?q=${encodeURIComponent(term)}`);
-    e.currentTarget.querySelector("input")?.blur(); // closes the phone keyboard
-  }
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [updatesOpen, setUpdatesOpen] = useState(false);
 
   useEffect(() => {
     connectSocket();
@@ -127,7 +109,7 @@ export function MainLayout() {
           TOP GLOBAL BAR
           ========================================================= */}
       <header className="sticky top-0 z-50 h-17 border-b border-border/90 bg-surface/95 shadow-[0_1px_12px_rgba(20,40,45,0.045)] backdrop-blur">
-        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-2 px-3 sm:gap-4 sm:px-4 lg:px-6">
+        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-4 px-4 lg:px-6">
           {/* BRAND */}
           <NavLink
             to="/"
@@ -149,30 +131,20 @@ export function MainLayout() {
             </div>
           </NavLink>
 
-          {/* GLOBAL SEARCH — visible on every screen size. On phones the
-              wordmark is hidden, so the field takes the free space between
-              the logo and the action buttons. Submitting opens the
-              student search on the Network page. */}
-          <form
-            role="search"
-            onSubmit={submitSearch}
-            className="relative min-w-0 flex-1 lg:max-w-105"
-          >
-            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary sm:left-3.5 sm:h-4.25 sm:w-4.25" />
+          {/* GLOBAL SEARCH */}
+          <div className="relative hidden max-w-105 flex-1 lg:block">
+            <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4.25 w-4.25 -translate-y-1/2 text-text-secondary" />
 
             <input
               type="search"
-              enterKeyHint="search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={wideSearch ? "Search CollegeBook" : "Search"}
+              placeholder="Search CollegeBook"
               aria-label="Search CollegeBook"
-              className="w-full min-w-0 rounded-full border border-border bg-bg py-2 pl-9 pr-3 text-base text-text outline-none transition placeholder:text-text-secondary focus:border-brand focus:bg-surface focus:ring-2 focus:ring-brand/10 sm:py-2.5 sm:pl-10 sm:pr-4 sm:text-sm"
+              className="w-full rounded-full border border-border bg-bg py-2.5 pl-10 pr-4 text-sm text-text outline-none transition placeholder:text-text-secondary focus:border-brand focus:bg-surface focus:ring-2 focus:ring-brand/10"
             />
-          </form>
+          </div>
 
           {/* SPACER */}
-          <div className="hidden lg:ml-auto lg:block" />
+          <div className="ml-auto" />
 
           {/* NOTIFICATIONS */}
           <NavLink
@@ -336,6 +308,20 @@ export function MainLayout() {
             )}
           </div>
 
+          {/* RESPONSIVE COMMUNITY UPDATES — mirrors the desktop right sidebar below xl */}
+          <button
+            type="button"
+            onClick={() => setUpdatesOpen(true)}
+            aria-label="Open community updates"
+            aria-expanded={updatesOpen}
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-text-secondary shadow-sm transition hover:bg-bg hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/30 xl:hidden"
+          >
+            <UpdatesIcon className="h-5 w-5" />
+            {(broadcasts?.items?.length || pendingConnections?.length || birthdays?.length || events?.length) ? (
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-brand ring-2 ring-surface" />
+            ) : null}
+          </button>
+
           {/* MOBILE MENU */}
           <button
             type="button"
@@ -413,25 +399,6 @@ export function MainLayout() {
                 </NavLink>
               )}
 
-              <div className="mt-3 border-t border-border pt-3">
-                <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-text-secondary">Colour theme</p>
-                <div className="flex flex-wrap gap-2 px-1">
-                  {themes.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      title={item.name}
-                      aria-label={`Use ${item.name} theme`}
-                      aria-pressed={theme === item.id}
-                      onClick={() => setTheme(item.id)}
-                      className={`relative h-8 w-8 rounded-full transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-brand/30 ${theme === item.id ? 'ring-2 ring-brand ring-offset-2 ring-offset-surface' : ''}`}
-                      style={{ backgroundColor: item.color }}
-                    >
-                      {theme === item.id && <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </>
         )}
@@ -573,6 +540,66 @@ export function MainLayout() {
       </aside>
 
       {/* =========================================================
+          RESPONSIVE RIGHT-SIDEBAR DRAWER
+          At browser zoom / tablets / mobile the fixed desktop rail is
+          intentionally replaced by this drawer so the same information
+          never disappears.
+          ========================================================= */}
+      {updatesOpen && (
+        <>
+          <button
+            type="button"
+            aria-label="Close community updates"
+            className="fixed inset-0 z-[60] bg-black/25 xl:hidden"
+            onClick={() => setUpdatesOpen(false)}
+          />
+          <aside className="fixed bottom-0 right-0 top-0 z-[70] w-[min(92vw,340px)] overflow-y-auto border-l border-border bg-surface shadow-[-18px_0_45px_rgba(20,40,45,0.16)] xl:hidden">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/95 px-4 py-4 backdrop-blur">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">CollegeBook</p>
+                <h2 className="mt-0.5 text-base font-bold text-text">Community updates</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUpdatesOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:bg-bg hover:text-text"
+                aria-label="Close community updates"
+              >
+                <CloseIcon className="h-4.5 w-4.5" />
+              </button>
+            </div>
+            <div className="space-y-4 p-4">
+
+          <NavLink onClick={() => setUpdatesOpen(false)} to="/institution-news" className="block rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-brand/30 hover:bg-brand-soft/10">
+            <div className="mb-3 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-[0.12em] text-text">Institutional Updates</h2><span aria-hidden="true">📢</span></div>
+            {broadcasts?.items?.length ? <div><p className="text-sm font-bold text-text">{broadcasts.items[0].broadcast.title}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-text-secondary">{broadcasts.items[0].broadcast.body}</p><p className="mt-2 text-[10px] font-semibold text-brand">View all updates →</p></div> : <p className="text-xs leading-5 text-text-secondary">No institutional updates yet. <span className="font-semibold text-brand">View announcements →</span></p>}
+          </NavLink>
+
+          <NavLink onClick={() => setUpdatesOpen(false)} to="/yearbook" className="block rounded-2xl border border-[#d9c7a9] bg-[#f8f2e8] p-4 transition hover:shadow-sm">
+            <div className="mb-3 flex items-center justify-between"><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-yearbook">YearBook</p><YearBookIcon className="h-4 w-4 text-yearbook" /></div>
+            <p className="text-sm font-bold text-yearbook-ink">Preserve your institution's story.</p><p className="mt-1 text-xs text-yearbook-ink/70">Explore graduating classes and memories.</p><p className="mt-3 text-[10px] font-bold text-yearbook">View YearBook →</p>
+          </NavLink>
+
+          <NavLink onClick={() => setUpdatesOpen(false)} to="/network" className="block rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-brand/30 hover:bg-brand-soft/10">
+            <div className="mb-3 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-[0.12em] text-text">Network Requests</h2><NetworkIcon className="h-4 w-4 text-text-secondary" /></div>
+            {pendingConnections?.length ? <><div className="flex items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-soft text-xs font-bold text-brand">{pendingConnections[0].profilePhotoUrl ? <img src={pendingConnections[0].profilePhotoUrl} alt="" className="h-full w-full object-cover" /> : `${pendingConnections[0].firstName?.[0] ?? ''}${pendingConnections[0].lastName?.[0] ?? ''}`}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-text">{pendingConnections[0].firstName} {pendingConnections[0].lastName}</p><p className="text-[11px] text-text-secondary">wants to connect with you</p></div></div><p className="mt-3 text-[10px] font-bold text-brand">{pendingConnections.length} pending request{pendingConnections.length === 1 ? '' : 's'} · View Network →</p></> : <p className="text-xs leading-5 text-text-secondary">No new connection requests. <span className="font-semibold text-brand">Open Network →</span></p>}
+          </NavLink>
+
+          <NavLink onClick={() => setUpdatesOpen(false)} to="/birthdays" className="block rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-brand/30 hover:bg-brand-soft/10">
+            <div className="mb-3 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-[0.12em] text-text">Birthdays</h2><span aria-hidden="true">🎂</span></div>
+            {birthdays?.length ? <><p className="text-sm font-bold text-text">{birthdays[0].firstName} {birthdays[0].lastName}</p><p className="mt-1 text-xs text-text-secondary">Birthday coming up on {new Date(birthdays[0].birthdayDate).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</p><p className="mt-2 text-[10px] font-bold text-brand">See upcoming birthdays →</p></> : <p className="text-xs leading-5 text-text-secondary">No birthdays shared in the next 7 days.</p>}
+          </NavLink>
+
+          <NavLink onClick={() => setUpdatesOpen(false)} to="/institution-events" className="block rounded-2xl border border-border bg-surface p-4 shadow-sm transition hover:border-brand/30 hover:bg-brand-soft/10">
+            <div className="mb-3 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-[0.12em] text-text">Upcoming Events</h2><span aria-hidden="true">📅</span></div>
+            {events?.length ? <><p className="text-sm font-bold text-text">{events[0].title}</p><p className="mt-1 text-xs text-text-secondary">{new Date(events[0].eventDate).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}{events[0].location ? ` · ${events[0].location}` : ''}</p><p className="mt-2 text-[10px] font-bold text-brand">Institution Calendar →</p></> : <p className="text-xs leading-5 text-text-secondary">No upcoming memorable days published yet.</p>}
+          </NavLink>
+            </div>
+          </aside>
+        </>
+      )}
+
+      {/* =========================================================
           MOBILE BOTTOM NAVIGATION
           ========================================================= */}
       <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-border bg-surface/95 px-1 py-2 backdrop-blur lg:hidden">
@@ -652,6 +679,23 @@ function CollegeBookIcon(props) {
         strokeLinejoin="round"
       />
       <path d="M4 19a2.5 2.5 0 0 1 2.5-2.5H20" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function UpdatesIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" {...props}>
+      <path d="M4 5.5h16v11H8l-4 3v-14Z" strokeLinejoin="round" />
+      <path d="M8 9h8M8 12.5h5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CloseIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="m6 6 12 12M18 6 6 18" strokeLinecap="round" />
     </svg>
   );
 }

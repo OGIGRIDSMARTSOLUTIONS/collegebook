@@ -3,7 +3,7 @@ import { DotWaveField } from '../components/DotWaveField';
 const features = [
   {
     title: 'Connect with classmates',
-    text: 'Keep in touch with your classmates long after graduation.',
+    text: 'Keep in touch within your school and across institutions.',
     tone: 'teal',
     icon: 'people',
   },

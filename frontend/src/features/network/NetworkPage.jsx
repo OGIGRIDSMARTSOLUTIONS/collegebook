@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { studentService } from '../../services/student.service';
 import { useConnections, usePendingConnections, useConnectionActions } from '../../hooks/useConnections';
@@ -34,18 +34,8 @@ function PersonRow({ student, right }) {
 }
 
 function SearchSection() {
-  // ?q= comes from the global search bar in the top navigation.
-  const [searchParams] = useSearchParams();
-  const urlQuery = (searchParams.get('q') ?? '').trim();
-  const [query, setQuery] = useState(urlQuery);
-  const [submittedQuery, setSubmittedQuery] = useState(urlQuery);
-
-  useEffect(() => {
-    if (urlQuery) {
-      setQuery(urlQuery);
-      setSubmittedQuery(urlQuery);
-    }
-  }, [urlQuery]);
+  const [query, setQuery] = useState('');
+  const [submittedQuery, setSubmittedQuery] = useState('');
   const { send } = useConnectionActions();
   const [feedback, setFeedback] = useState({});
 

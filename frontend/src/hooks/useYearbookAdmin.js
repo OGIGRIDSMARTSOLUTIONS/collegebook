@@ -9,23 +9,7 @@ export function useCreateYearbook() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: yearbookService.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'yearbooks'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'students'] });
-    },
-  });
-}
-
-/** Adds every student of the YearBook's class who isn't listed yet. */
-export function useSyncYearbookStudents(id) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload) => yearbookService.syncStudents(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'yearbooks'] });
-      queryClient.invalidateQueries({ queryKey: ['yearbooks', id] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'students'] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'yearbooks'] }),
   });
 }
 
@@ -35,10 +19,7 @@ export function useYearbookStatusActions(id) {
     queryClient.invalidateQueries({ queryKey: ['admin', 'yearbooks'] });
     queryClient.invalidateQueries({ queryKey: ['yearbooks', id] });
   };
-  const publish = useMutation({
-    mutationFn: () => yearbookService.publish(id),
-    onSuccess: () => { invalidate(); queryClient.invalidateQueries({ queryKey: ['admin', 'students'] }); },
-  });
+  const publish = useMutation({ mutationFn: () => yearbookService.publish(id), onSuccess: invalidate });
   const archive = useMutation({ mutationFn: () => yearbookService.archive(id), onSuccess: invalidate });
   return { publish, archive };
 }

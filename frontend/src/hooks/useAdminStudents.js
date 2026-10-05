@@ -24,22 +24,19 @@ export function useAdminUpdateStudent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }) => studentService.adminUpdate(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'students'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'yearbooks'] }); // a class move changes YearBook rosters
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'students'] }),
   });
 }
 
 
 export function useAdminBulkAnalyze() {
-  return useMutation({ mutationFn: (payload) => studentService.adminBulkAnalyze(payload) });
+  return useMutation({ mutationFn: (csv) => studentService.adminBulkAnalyze(csv) });
 }
 
 export function useAdminBulkImport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload) => studentService.adminBulkImport(payload),
+    mutationFn: (csv) => studentService.adminBulkImport(csv),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'students'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });

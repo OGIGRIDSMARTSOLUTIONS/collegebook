@@ -8,6 +8,6 @@ export const studentService = {
   adminSearch: (params) => api.get('/students/admin-search', { params }),
   adminCreate: (payload) => api.post('/students/admin', payload),
   adminUpdate: (id, payload) => api.patch(`/students/${id}`, payload),
-  adminBulkAnalyze: ({ csv, setId }) => api.post('/students/admin/bulk-analyze', { csv, setId }),
-  adminBulkImport: ({ csv, setId }) => api.post('/students/admin/bulk-import', { csv, setId }),
+  adminBulkAnalyze: (csv) => api.post('/students/admin/bulk-analyze', { csv }),
+  adminBulkImport: (csv) => api.post('/students/admin/bulk-import', { csv }),
 };

@@ -10,7 +10,6 @@ export const yearbookService = {
   create: (payload) => api.post('/yearbooks', payload),
   publish: (id) => api.post(`/yearbooks/${id}/publish`),
   archive: (id) => api.post(`/yearbooks/${id}/archive`),
-  syncStudents: (id, payload = {}) => api.post(`/yearbooks/${id}/sync-students`, payload),
   addSection: (id, payload) => api.post(`/yearbooks/${id}/sections`, payload),
   addStudentEntry: (id, payload) => api.post(`/yearbooks/${id}/students`, payload),
   addPhoto: (id, payload) => api.post(`/yearbooks/${id}/photos`, payload),

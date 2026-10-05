@@ -1,6 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
-@import "./styles/glacial.css";
 
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;

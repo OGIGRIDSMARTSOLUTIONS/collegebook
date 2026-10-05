@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { pickCurrentClass, isInstitutionClass } from './currentClass';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
 import {
@@ -31,7 +30,6 @@ function AcademicYearSection() {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const sets = setsQuery.data ?? [];
-  const current = pickCurrentClass(sets);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -49,15 +47,9 @@ function AcademicYearSection() {
       {createSet.isError && <p className="mt-2 text-sm text-danger">{createSet.error.message}</p>}
       <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {sets.map((set) => (
-          <div key={set.id} className={`rounded-xl border px-4 py-3 ${current?.id === set.id ? 'border-brand/40 bg-brand-soft' : 'border-border bg-bg'}`}>
+          <div key={set.id} className="rounded-xl border border-border bg-bg px-4 py-3">
             <p className="font-semibold text-text">{set.name}</p>
-            <p className="text-xs text-text-secondary">
-              {set.department
-                ? `Department cohort (${set.department.name}). Not used for new students.`
-                : !isInstitutionClass(set)
-                  ? `Institutional class, ${String(set.status).toLowerCase()}. Not used for new students.`
-                  : current?.id === set.id ? 'Current class. New students join this one.' : 'Institutional class'}
-            </p>
+            <p className="text-xs text-text-secondary">Institutional class</p>
           </div>
         ))}
       </div>

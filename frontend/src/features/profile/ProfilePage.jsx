@@ -222,16 +222,13 @@ const PRIVACY_LABELS = {
   showBirthday: "Show my birthday to institution members",
 };
 
-// APPROVED_INSTITUTIONS is not offered: cross-institution interaction is
-// switched off platform-wide, and naming it would tell students that other
-// schools use CollegeBook. A legacy saved value still displays (see below).
 const MESSAGE_OPTIONS = [
   "NOBODY_EXCEPT_CONNECTIONS",
   "SET_ONLY",
   "INSTITUTION_ONLY",
+  "APPROVED_INSTITUTIONS",
   "EVERYONE",
 ];
-const HIDDEN_OPTION_LABELS = { APPROVED_INSTITUTIONS: "My institution" };
 const VISIBILITY_OPTIONS = [
   "CONNECTIONS_ONLY",
   "SET_ONLY",
@@ -240,7 +237,6 @@ const VISIBILITY_OPTIONS = [
 ];
 
 function readableOption(value) {
-  if (HIDDEN_OPTION_LABELS[value]) return HIDDEN_OPTION_LABELS[value];
   return value
     .replace(/_/g, " ")
     .toLowerCase()
@@ -276,7 +272,7 @@ function PrivacySettings() {
               onChange={(e) => handleChange(field, e.target.value)}
               className="w-full rounded-md border border-border bg-surface px-3 py-2 text-text"
             >
-              {(options.includes(privacyQuery.data[field]) ? options : [...options, privacyQuery.data[field]]).map((opt) => (
+              {options.map((opt) => (
                 <option key={opt} value={opt}>
                   {readableOption(opt)}
                 </option>
