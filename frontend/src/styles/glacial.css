@@ -1,0 +1,181 @@
+/* =========================================================
+   COLLEGEBOOK GLACIAL BACKGROUND
+   ---------------------------------------------------------
+   Purely visual and fully additive. No component, route,
+   hook or JSX file was changed to make this work.
+
+   To switch it off, remove the single line
+     @import "./styles/glacial.css";
+   from src/index.css.
+
+   It follows the active theme (data-theme on <html>) through
+   --color-brand / --color-brand-soft, so every theme gets its
+   own tint of ice.
+
+   Design notes
+   - The ice itself is one fixed layer behind the app, made
+     of pre-softened gradients plus a faint frost grain. Cards
+     become translucent over it, so they read as frosted panes
+     without putting backdrop-filter on every card (that would
+     trap position:fixed children such as the floating message
+     avatars, and slow long feeds on phones).
+   - Real backdrop blur is used only on surfaces that sit over
+     scrolling content: fixed sidebars, sticky bars, dropdowns.
+   - Everything sits in @layer utilities so hover:, focus:,
+     aria- and data- variants keep winning exactly as before.
+   ========================================================= */
+
+:root {
+  --glacier-base: color-mix(in oklab, var(--color-brand-soft) 45%, #eef5f8);
+  --glacier-tint: color-mix(in oklab, var(--color-brand) 32%, transparent);
+  --glacier-tint-faint: color-mix(in oklab, var(--color-brand) 18%, transparent);
+  --glacier-pane: rgb(255 255 255 / 0.7);
+  --glacier-pane-strong: rgb(255 255 255 / 0.88);
+  --glacier-glass: rgb(255 255 255 / 0.56);
+  --glacier-well: rgb(255 255 255 / 0.42);
+  --glacier-blur: blur(18px) saturate(160%);
+}
+
+html {
+  background-color: var(--glacier-base);
+}
+
+/* html body beats the plain body rule later in index.css */
+html body {
+  background-color: transparent;
+}
+
+/* The ice sheet: fixed, behind everything, never clickable. */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  inset: -12%;
+  background:
+    radial-gradient(42% 38% at 18% 14%, rgb(255 255 255 / 0.95), transparent 70%),
+    radial-gradient(38% 44% at 86% 22%, var(--glacier-tint), transparent 72%),
+    radial-gradient(46% 40% at 72% 88%, rgb(180 218 236 / 0.9), transparent 70%),
+    radial-gradient(30% 28% at 48% 52%, rgb(214 236 246 / 0.7), transparent 75%),
+    radial-gradient(36% 34% at 8% 78%, var(--glacier-tint-faint), transparent 72%),
+    linear-gradient(118deg, transparent 38%, rgb(255 255 255 / 0.55) 48%, transparent 58%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.35), transparent 60%);
+  animation: glacier-drift 90s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Frost grain: a tiny inline noise texture, no network request. */
+body::after {
+  opacity: 0.18;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Glaciers move slowly. The global reduced-motion rule in
+   index.css already stops this for people who ask for it. */
+@keyframes glacier-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.06); }
+}
+
+@layer utilities {
+  /* Page shells: let the ice show through. */
+  .min-h-screen.bg-bg,
+  .min-h-screen.bg-white {
+    background-color: transparent;
+  }
+
+  /* Recessed areas (inputs, chips, hovered rows, inner wells). */
+  .bg-bg {
+    background-color: var(--glacier-well);
+  }
+
+  /* Cards and panels: frosted panes. */
+  .bg-surface {
+    background-color: var(--glacier-pane);
+  }
+
+  /* Surfaces floating over scrolling content get real blur:
+     fixed sidebars and absolute dropdowns / menus. */
+  .fixed.bg-surface,
+  .absolute.bg-surface {
+    background-color: var(--glacier-glass);
+    -webkit-backdrop-filter: var(--glacier-blur);
+    backdrop-filter: var(--glacier-blur);
+  }
+
+  /* Dropdowns and menus cover text, so they stay near-solid. */
+  .absolute.bg-surface {
+    background-color: var(--glacier-pane-strong);
+  }
+
+  /* Cards inside a fixed sidebar sit on blurred glass already. */
+  .fixed .bg-surface {
+    background-color: var(--glacier-pane);
+  }
+
+  /* Existing sticky header and mobile bottom nav: same glass. */
+  .bg-surface\/95.backdrop-blur,
+  .bg-surface\/90.backdrop-blur {
+    background-color: rgb(255 255 255 / 0.62);
+    -webkit-backdrop-filter: var(--glacier-blur);
+    backdrop-filter: var(--glacier-blur);
+  }
+
+  /* Auth screens */
+  .min-h-screen.bg-white > section.bg-white {
+    background-color: rgb(255 255 255 / 0.6);
+    -webkit-backdrop-filter: var(--glacier-blur);
+    backdrop-filter: var(--glacier-blur);
+  }
+
+  .bg-\[\#eefafd\] {
+    background-color: color-mix(in oklab, var(--color-brand-soft) 40%, transparent);
+  }
+}
+
+/* Browsers without backdrop-filter: keep floating panels solid. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  @layer utilities {
+    .fixed.bg-surface,
+    .absolute.bg-surface,
+    .bg-surface\/95.backdrop-blur,
+    .bg-surface\/90.backdrop-blur,
+    .min-h-screen.bg-white > section.bg-white {
+      background-color: rgb(255 255 255 / 0.96);
+    }
+  }
+}
+
+/* People who ask the OS for less transparency get the
+   original solid look back, with the ice kept as a calm tint. */
+@media (prefers-reduced-transparency: reduce) {
+  body::before { animation: none; }
+  body::after { display: none; }
+
+  @layer utilities {
+    .bg-surface,
+    .fixed.bg-surface,
+    .absolute.bg-surface,
+    .fixed .bg-surface,
+    .bg-surface\/95.backdrop-blur,
+    .bg-surface\/90.backdrop-blur,
+    .min-h-screen.bg-white > section.bg-white {
+      background-color: var(--color-surface);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .bg-bg { background-color: var(--color-bg); }
+  }
+}
+
+/* Printing: plain paper, no ice. */
+@media print {
+  html { background: #fff; }
+  body::before, body::after { display: none; }
+}
