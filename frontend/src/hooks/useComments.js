@@ -13,9 +13,26 @@ export function useAddComment(postId) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (payload) => postService.comment(postId, payload),
-    onSuccess: () => {
+    onSuccess: (createdComment) => {
+      // Immediately show the saved total, even while the feed is refetching.
+      // Keep other post fields and the current feed pagination intact.
+      queryClient.setQueriesData({ queryKey: ['feed'] }, (previous) => {
+        if (!previous?.items) return previous;
+        return {
+          ...previous,
+          items: previous.items.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  commentCount: typeof createdComment?.commentCount === 'number'
+                    ? createdComment.commentCount
+                    : (Number(post.commentCount) || 0) + 1,
+                }
+              : post
+          ),
+        };
+      });
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-      // Refresh the feed's comment totals after adding a comment.
       queryClient.invalidateQueries({ queryKey: ['feed'] });
     },
   });

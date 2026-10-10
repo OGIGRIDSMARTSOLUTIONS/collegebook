@@ -211,7 +211,7 @@ async function listStudentPosts(studentId, viewerContext, { page, pageSize }) {
 async function withLikeState(posts, viewerStudentId) {
   if (!posts.length) return posts;
   const postIds = posts.map((post) => post.id);
-  const [counts, ownLikes] = await Promise.all([
+  const [counts, ownLikes, commentCounts] = await Promise.all([
     prisma.reaction.groupBy({
       by: ['postId'],
       where: { postId: { in: postIds }, type: 'LIKE' },
@@ -221,12 +221,19 @@ async function withLikeState(posts, viewerStudentId) {
       where: { postId: { in: postIds }, studentId: viewerStudentId, type: 'LIKE' },
       select: { postId: true },
     }),
+    prisma.comment.groupBy({
+      by: ['postId'],
+      where: { postId: { in: postIds }, deletedAt: null },
+      _count: { _all: true },
+    }),
   ]);
+  const commentCountByPost = new Map(commentCounts.map((row) => [row.postId, row._count._all]));
   const countByPost = new Map(counts.map((row) => [row.postId, row._count._all]));
   const likedPostIds = new Set(ownLikes.map((row) => row.postId));
   return posts.map((post) => ({
     ...post,
     likeCount: countByPost.get(post.id) || 0,
+    commentCount: commentCountByPost.get(post.id) || 0,
     likedByMe: likedPostIds.has(post.id),
   }));
 }
@@ -254,7 +261,12 @@ async function createComment(actorContext, postId, { body, parentCommentId, ment
 
   await notifyMentions(actorContext, mentions, { postId: post.id, commentId: comment.id });
 
-  return comment;
+  // Return an authoritative count so the feed can update without reopening comments.
+  const commentCount = await prisma.comment.count({
+    where: { postId: post.id, deletedAt: null },
+  });
+
+  return { ...comment, commentCount };
 }
 
 async function listComments(postId, viewerContext) {

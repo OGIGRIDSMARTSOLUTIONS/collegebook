@@ -49,6 +49,12 @@ export function CommentSection({ postId }) {
         ))}
       </div>
 
+      {addComment.isError && (
+        <p role="alert" className="mt-2 text-xs text-danger">
+          {addComment.error?.message || 'Comment could not be saved. Please try again.'}
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="mt-3 flex items-center gap-2">
         <input
           value={body}
