@@ -15,8 +15,7 @@ export function useAddComment(postId) {
     mutationFn: (payload) => postService.comment(postId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', postId] });
-      // Comment counts aren't in the feed payload today, but invalidating
-      // here means the day they are, this keeps working with no changes.
+      // Refresh the feed's comment totals after adding a comment.
       queryClient.invalidateQueries({ queryKey: ['feed'] });
     },
   });

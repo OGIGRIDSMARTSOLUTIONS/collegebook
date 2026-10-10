@@ -334,15 +334,22 @@ export function PostCard({ post }) {
         >
           <span aria-hidden="true">{post.likedByMe ? '♥' : '♡'}</span>
           <span>{post.likedByMe ? 'Liked' : 'Like'}</span>
-          <span className="tabular-nums">{post.likeCount ?? 0}</span>
+          <span className="text-[10px] tabular-nums text-text-secondary">{post.likeCount ?? 0}</span>
         </button>
         {react.isError && (
           <span role="alert" className="text-xs text-danger">
             {react.error?.message || 'Could not save Like. Please try again.'}
           </span>
         )}
-        <button onClick={() => setShowComments((s) => !s)} className="hover:text-brand">
-          Comment
+        <button
+          type="button"
+          onClick={() => setShowComments((s) => !s)}
+          aria-expanded={showComments}
+          aria-label={`Comments on post; ${post.commentCount ?? 0} comments`}
+          className="inline-flex items-center gap-1.5 rounded px-2 py-1 hover:bg-brand-soft hover:text-brand"
+        >
+          <span>Comment</span>
+          <span className="text-[10px] tabular-nums text-text-secondary">{post.commentCount ?? 0}</span>
         </button>
       </div>
       {showComments && <CommentSection postId={post.id} />}
