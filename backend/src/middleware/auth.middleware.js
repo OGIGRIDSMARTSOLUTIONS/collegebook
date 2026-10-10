@@ -31,8 +31,10 @@ async function authenticate(req, res, next) {
     });
 
     if (!user) throw new ApiError('Not authenticated', 401);
+    if (user.accountStatus === 'PENDING') throw new ApiError('Account pending activation', 403);
     if (user.accountStatus === 'SUSPENDED') throw new ApiError('Account suspended', 403);
     if (user.accountStatus === 'BANNED') throw new ApiError('Account banned', 403);
+    if (user.student && !user.student.registryApproved) throw new ApiError('Institution has withdrawn CollegeBook access', 403);
 
     // req.context is the single source of truth for the rest of the
     // request pipeline — controllers/services must read from here, never

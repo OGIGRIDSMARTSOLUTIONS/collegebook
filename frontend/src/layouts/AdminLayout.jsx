@@ -52,7 +52,7 @@ export function AdminLayout() {
     <div className="min-h-screen overflow-x-hidden bg-bg text-text">
       {/* DESKTOP HEADER */}
       <header className="hidden border-b border-border bg-surface lg:block">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6">
           <Link to="/" className="text-lg font-bold tracking-tight text-text">
             College<span className="text-brand">Book</span>{' '}
             <span className="font-medium text-text-secondary">Admin</span>
@@ -124,7 +124,7 @@ export function AdminLayout() {
       </header>
 
       {/* ADMIN WORKSPACE */}
-      <div className="mx-auto flex w-full max-w-7xl gap-8 px-4 py-5 sm:px-6 sm:py-7 lg:px-6 lg:py-8">
+      <div className="flex w-full min-w-0 gap-4 px-3 py-5 sm:px-5 sm:py-7 lg:gap-6 lg:px-6 lg:py-8">
         {/* DESKTOP SIDEBAR */}
         <aside className="hidden w-56 shrink-0 lg:block">
           <div className="sticky top-24 rounded-2xl border border-border bg-surface p-3 shadow-sm">
@@ -138,7 +138,7 @@ export function AdminLayout() {
 
         {/* PAGE CONTENT */}
         <main className="min-w-0 flex-1">
-          <div className="mx-auto w-full max-w-4xl min-w-0">
+          <div className="w-full min-w-0">
             <Outlet />
           </div>
         </main>

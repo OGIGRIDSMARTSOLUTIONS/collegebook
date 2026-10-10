@@ -165,7 +165,8 @@ async function adminSearchStudents(institutionId, { q, setId, page, pageSize }) 
         studentNumber: true,
         phoneNumber: true,
         dateOfBirth: true,
-        user: { select: { email: true } },
+        registryApproved: true,
+        user: { select: { email: true, accountStatus: true } },
       },
       skip: (page - 1) * pageSize,
       take: pageSize,
@@ -194,6 +195,7 @@ async function adminSearchStudents(institutionId, { q, setId, page, pageSize }) 
     items: items.map(({ user, ...rest }) => ({
       ...rest,
       email: user?.email ?? null,
+      accountStatus: user?.accountStatus ?? null,
       yearBookAttached: attachedStudentIds.has(rest.id),
     })),
     total,
@@ -688,11 +690,50 @@ async function getStudentInstitutionId(studentId) {
   return student?.institutionId ?? null;
 }
 
+/** Institution-scoped account suspension/reactivation. Student records are retained. */
+async function adminSetStudentAccountStatus(institutionId, studentId, status, reason) {
+  if (!['ACTIVE', 'SUSPENDED'].includes(status)) {
+    throw new ApiError('Invalid account status', 400);
+  }
+
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, institutionId },
+    select: { id: true, userId: true, registryApproved: true, user: { select: { accountStatus: true } } },
+  });
+  if (!student) throw new ApiError('Student not found in your institution', 404);
+  if (!student.userId) throw new ApiError('Student has not created a login account', 409);
+  if (student.user.accountStatus === 'PENDING') {
+    throw new ApiError('Pending accounts must complete registration verification first', 409);
+  }
+  if (student.user.accountStatus === 'BANNED') {
+    throw new ApiError('A banned account cannot be reactivated by an institution administrator', 403);
+  }
+  if (status === 'ACTIVE' && !student.registryApproved) throw new ApiError('Institution approval must be restored before reactivation', 409);
+  if (status === 'SUSPENDED' && !String(reason || '').trim()) {
+    throw new ApiError('A reason for deactivation is required', 400);
+  }
+
+  const user = await prisma.user.update({
+    where: { id: student.userId },
+    data: { accountStatus: status, refreshTokenHash: null },
+    select: { id: true, accountStatus: true },
+  });
+
+  // Immediately disconnect sockets on this backend instance.
+  // A distributed deployment should propagate revocations to other instances.
+  if (status === 'SUSPENDED') {
+    const { disconnectStudent } = require('../websocket/socket');
+    disconnectStudent(studentId);
+  }
+  return { studentId, accountStatus: user.accountStatus };
+}
+
 module.exports = {
   getStudentById,
   updateOwnProfile,
   searchStudents,
   adminSearchStudents,
+  adminSetStudentAccountStatus,
   adminCreateStudent,
   adminUpdateStudent,
   analyzeStudentCsv,

@@ -176,7 +176,7 @@ async function getFeed(viewerContext, { page, pageSize }) {
   ]);
 
   return {
-    items: items.map(stripAuthorInternals),
+    items: await withLikeState(items.map(stripAuthorInternals), viewerContext.studentId),
     total,
     page,
     pageSize,
@@ -200,11 +200,35 @@ async function listStudentPosts(studentId, viewerContext, { page, pageSize }) {
 
   const start = (page - 1) * pageSize;
   return {
-    items: visible.slice(start, start + pageSize).map(stripAuthorInternals),
+    items: await withLikeState(visible.slice(start, start + pageSize).map(stripAuthorInternals), viewerContext.studentId),
     total: visible.length,
     page,
     pageSize,
   };
+}
+
+/** Add viewer-specific Like state and total Like count without exposing student IDs. */
+async function withLikeState(posts, viewerStudentId) {
+  if (!posts.length) return posts;
+  const postIds = posts.map((post) => post.id);
+  const [counts, ownLikes] = await Promise.all([
+    prisma.reaction.groupBy({
+      by: ['postId'],
+      where: { postId: { in: postIds }, type: 'LIKE' },
+      _count: { _all: true },
+    }),
+    prisma.reaction.findMany({
+      where: { postId: { in: postIds }, studentId: viewerStudentId, type: 'LIKE' },
+      select: { postId: true },
+    }),
+  ]);
+  const countByPost = new Map(counts.map((row) => [row.postId, row._count._all]));
+  const likedPostIds = new Set(ownLikes.map((row) => row.postId));
+  return posts.map((post) => ({
+    ...post,
+    likeCount: countByPost.get(post.id) || 0,
+    likedByMe: likedPostIds.has(post.id),
+  }));
 }
 
 function stripAuthorInternals(post) {
@@ -247,10 +271,12 @@ async function listComments(postId, viewerContext) {
 
 // ── Reactions ──
 
-async function toggleReaction(studentId, { postId, commentId }, type) {
+async function toggleReaction(actorContext, { postId, commentId }, type) {
+  const studentId = actorContext.studentId;
   if (postId) {
     const post = await prisma.post.findUnique({ where: { id: postId } });
     if (!post || post.deletedAt) throw new ApiError('Post not found', 404);
+    await getPostOrThrow(postId, actorContext);
   }
   if (commentId) {
     const comment = await prisma.comment.findUnique({ where: { id: commentId } });

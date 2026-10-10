@@ -93,10 +93,11 @@ function initSocket(httpServer) {
         where: { id: payload.sub },
         select: {
           id: true,
-          student: { select: { id: true, institutionId: true } },
+          accountStatus: true,
+          student: { select: { id: true, institutionId: true, registryApproved: true } },
         },
       });
-      if (!user || !user.student) return next(new Error('Not authenticated'));
+      if (!user || user.accountStatus !== 'ACTIVE' || !user.student || !user.student.registryApproved) return next(new Error('Not authenticated'));
 
       socket.data.studentId = user.student.id;
       socket.data.institutionId = user.student.institutionId;
@@ -149,8 +150,13 @@ function initSocket(httpServer) {
   return io;
 }
 
+function disconnectStudent(studentId) {
+  if (!io) return;
+  io.in(`student:${studentId}`).disconnectSockets(true);
+}
+
 function getIO() {
   return io;
 }
 
-module.exports = { initSocket, getIO, isOnline };
+module.exports = { initSocket, getIO, isOnline, disconnectStudent };

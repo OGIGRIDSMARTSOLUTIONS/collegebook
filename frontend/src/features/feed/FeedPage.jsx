@@ -324,9 +324,23 @@ export function PostCard({ post }) {
         </div>
       )}
       <div className="mt-3 flex items-center gap-4 border-t border-border pt-3 text-sm text-text-secondary">
-        <button onClick={() => react.mutate()} className="hover:text-brand">
-          Like
+        <button
+          type="button"
+          onClick={() => react.mutate()}
+          disabled={react.isPending}
+          aria-pressed={Boolean(post.likedByMe)}
+          aria-label={`${post.likedByMe ? 'Unlike' : 'Like'} post; ${post.likeCount ?? 0} likes`}
+          className={`inline-flex items-center gap-1.5 rounded px-2 py-1 transition-colors hover:bg-brand-soft hover:text-brand disabled:cursor-wait disabled:opacity-60 ${post.likedByMe ? 'font-semibold text-brand' : ''}`}
+        >
+          <span aria-hidden="true">{post.likedByMe ? '♥' : '♡'}</span>
+          <span>{post.likedByMe ? 'Liked' : 'Like'}</span>
+          <span className="tabular-nums">{post.likeCount ?? 0}</span>
         </button>
+        {react.isError && (
+          <span role="alert" className="text-xs text-danger">
+            {react.error?.message || 'Could not save Like. Please try again.'}
+          </span>
+        )}
         <button onClick={() => setShowComments((s) => !s)} className="hover:text-brand">
           Comment
         </button>

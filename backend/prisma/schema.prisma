@@ -334,6 +334,8 @@ model Student {
   gender             String?
   location           String?
   dateOfBirth        DateTime?
+  registryApproved   Boolean             @default(true)
+  accessEvents       StudentAccessEvent[]
   verificationStatus VerificationStatus  @default(PENDING)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -781,4 +783,17 @@ model AuditLog {
   @@index([institutionId])
   @@index([actorUserId])
   @@map("audit_logs")
+}
+
+model StudentAccessEvent {
+  id String @id @default(cuid())
+  institutionId String
+  studentId String
+  actorUserId String?
+  action String
+  reason String
+  createdAt DateTime @default(now())
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  @@index([institutionId, createdAt])
+  @@map("student_access_events")
 }

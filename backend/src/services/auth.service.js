@@ -128,7 +128,7 @@ async function register({ email, password, matriculationNumber, departmentId, de
     return { student, departmentMatch, phoneMatch, score };
   });
 
-  const matches = scored.filter((item) => item.score >= 2 && item.student.institution.status === 'ACTIVE');
+  const matches = scored.filter((item) => item.score >= 2 && item.student.institution.status === 'ACTIVE' && item.student.registryApproved);
   if (!matches.length) {
     throw new ApiError('Your matriculation number was found, but the department/phone information did not verify the student record', 409);
   }
@@ -137,6 +137,7 @@ async function register({ email, password, matriculationNumber, departmentId, de
   }
 
   const match = matches[0].student;
+  if (!match.registryApproved) throw new ApiError('Institution has withdrawn approval for this student', 403);
   if (match.userId) {
     throw new ApiError('This institutional student record already has a CollegeBook account', 409);
   }
@@ -179,8 +180,12 @@ async function login({ email, password }) {
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) throw new ApiError('Invalid email or password', 401);
 
+  if (user.accountStatus === 'PENDING') throw new ApiError('Account pending activation', 403);
   if (user.accountStatus === 'SUSPENDED') throw new ApiError('Account suspended', 403);
   if (user.accountStatus === 'BANNED') throw new ApiError('Account banned', 403);
+  if (await prisma.student.findFirst({ where: { userId: user.id, registryApproved: false }, select: { id: true } })) {
+    throw new ApiError('Institution has withdrawn CollegeBook access', 403);
+  }
 
   const accessToken = signAccessToken(user.id);
   const refreshToken = signRefreshToken(user.id);
@@ -233,8 +238,12 @@ async function loginWithGoogle(idToken) {
     throw new ApiError('No CollegeBook account found for this Google email. Register first.', 404);
   }
 
+  if (user.accountStatus === 'PENDING') throw new ApiError('Account pending activation', 403);
   if (user.accountStatus === 'SUSPENDED') throw new ApiError('Account suspended', 403);
   if (user.accountStatus === 'BANNED') throw new ApiError('Account banned', 403);
+  if (await prisma.student.findFirst({ where: { userId: user.id, registryApproved: false }, select: { id: true } })) {
+    throw new ApiError('Institution has withdrawn CollegeBook access', 403);
+  }
 
   const accessToken = signAccessToken(user.id);
   const refreshToken = signRefreshToken(user.id);
@@ -259,6 +268,10 @@ async function refresh(refreshToken) {
 
   const user = await prisma.user.findUnique({ where: { id: payload.sub } });
   if (!user) throw new ApiError('Not authenticated', 401);
+  if (user.accountStatus !== 'ACTIVE') throw new ApiError('Account not active', 403);
+  if (await prisma.student.findFirst({ where: { userId: user.id, registryApproved: false }, select: { id: true } })) {
+    throw new ApiError('Institution has withdrawn CollegeBook access', 403);
+  }
 
   const accessToken = signAccessToken(user.id);
   return { accessToken, user };

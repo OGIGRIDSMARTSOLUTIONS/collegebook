@@ -12,14 +12,14 @@ export function SuperAdminLayout() {
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
+        <div className="flex h-14 w-full items-center justify-between px-4 sm:px-6">
           <span className="text-lg font-semibold text-text">CollegeBook — Super Admin</span>
           <button onClick={handleLogout} className="text-sm text-danger hover:underline">
             Log out
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-6">
+      <main className="w-full min-w-0 px-4 py-6 sm:px-6">
         <Outlet />
       </main>
     </div>

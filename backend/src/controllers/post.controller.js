@@ -117,7 +117,7 @@ async function listCommentsHandler(req, res, next) {
 async function reactToPostHandler(req, res, next) {
   try {
     const result = await postService.toggleReaction(
-      req.context.studentId,
+      req.context,
       { postId: req.params.id },
       req.body.type
     );
@@ -130,7 +130,7 @@ async function reactToPostHandler(req, res, next) {
 async function reactToCommentHandler(req, res, next) {
   try {
     const result = await postService.toggleReaction(
-      req.context.studentId,
+      req.context,
       { commentId: req.params.id },
       req.body.type
     );

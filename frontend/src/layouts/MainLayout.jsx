@@ -128,7 +128,7 @@ export function MainLayout() {
           TOP GLOBAL BAR
           ========================================================= */}
       <header className="sticky top-0 z-50 h-17 border-b border-border/90 bg-surface/95 shadow-[0_1px_12px_rgba(20,40,45,0.045)] backdrop-blur">
-        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-4 px-4 lg:px-6">
+        <div className="flex h-full w-full min-w-0 items-center gap-4 px-4 lg:px-6">
           {/* BRAND */}
           <NavLink
             to="/"
@@ -668,8 +668,8 @@ export function MainLayout() {
       {/* =========================================================
           PAGE CONTENT
           ========================================================= */}
-      <main className="min-h-[calc(100vh-68px)] lg:pl-64 xl:pr-75">
-        <div className="mx-auto max-w-325 px-4 py-6 pb-24 md:px-6 lg:px-8 lg:pb-8">
+      <main className="min-h-[calc(100vh-68px)] min-w-0 lg:pl-64 xl:pr-75">
+        <div className="w-full min-w-0 px-3 py-6 pb-24 sm:px-4 md:px-5 lg:px-6 lg:pb-8">
           <Outlet />
         </div>
       </main>

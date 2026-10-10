@@ -43,3 +43,19 @@ export function useAdminBulkImport() {
     },
   });
 }
+
+export function useAdminSetAccountStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status, reason }) => studentService.adminSetAccountStatus(id, { status, reason }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'students'] }),
+  });
+}
+
+export function useUpdateRegistryApproval() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }) => studentService.updateRegistryApproval(id, payload),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['admin', 'students'] }),
+  });
+}

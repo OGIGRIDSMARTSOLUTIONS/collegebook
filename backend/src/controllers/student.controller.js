@@ -76,12 +76,27 @@ async function adminUpdateStudentHandler(req, res, next) {
   }
 }
 
+async function adminSetAccountStatusHandler(req, res, next) {
+  try {
+    const result = await studentService.adminSetStudentAccountStatus(
+      req.context.institutionId,
+      req.params.id,
+      req.body.status,
+      req.body.reason
+    );
+    return ok(res, result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   getMeHandler,
   updateMeHandler,
   getStudentHandler,
   searchStudentsHandler,
   adminSearchStudentsHandler,
+  adminSetAccountStatusHandler,
   adminCreateStudentHandler,
   adminUpdateStudentHandler,
   adminAnalyzeCsvHandler,

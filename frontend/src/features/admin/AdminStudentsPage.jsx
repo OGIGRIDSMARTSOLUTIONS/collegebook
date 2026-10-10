@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/Button';
 import { TextField } from '../../components/TextField';
-import { useAdminStudentSearch, useAdminCreateStudent, useAdminUpdateStudent, useAdminBulkAnalyze, useAdminBulkImport } from '../../hooks/useAdminStudents';
+import { useAdminStudentSearch, useAdminCreateStudent, useAdminUpdateStudent, useAdminBulkAnalyze, useAdminBulkImport, useAdminSetAccountStatus, useUpdateRegistryApproval } from '../../hooks/useAdminStudents';
 import { useDepartments, useAcademicSets } from '../../hooks/useInstitutionAdmin';
 import { LoadingState } from '../../components/loading/Spinner';
 
 function StudentRow({ student }) {
   const updateStudent = useAdminUpdateStudent();
+  const updateApproval = useUpdateRegistryApproval();
+  const [approvalOpen, setApprovalOpen] = useState(false);
+  const [approvalReason, setApprovalReason] = useState('');
+  const changeStatus = useAdminSetAccountStatus();
+  const [confirmStatus, setConfirmStatus] = useState(false);
+  const [reason, setReason] = useState('');
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     firstName: student.firstName ?? '',
@@ -53,19 +59,105 @@ function StudentRow({ student }) {
         {student.yearBookAttached ? <span className="text-success">Assigned</span> : <span>Pending</span>}
       </td>
       <td className="py-3">
+        <div className="mb-2 text-xs font-semibold text-text-secondary">
+          Account: {student.accountStatus || 'Not registered'}
+          {student.registryApproved === false && <span className="ml-2 text-danger">· Approval withdrawn</span>}
+        </div>
+        {confirmStatus && (
+          <div className="mb-3 min-w-56 space-y-2 rounded-lg border border-border p-2">
+            <p className="text-xs font-medium">
+              {student.accountStatus === 'SUSPENDED' ? 'Reactivate this account?' : 'Deactivate this account?'}
+            </p>
+            {student.accountStatus !== 'SUSPENDED' && (
+              <textarea
+                aria-label="Reason for deactivation"
+                className="w-full rounded-md border border-border bg-surface p-2 text-xs"
+                placeholder="Reason (required)"
+                maxLength={500}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+              />
+            )}
+            <div className="flex gap-2">
+              <Button type="button" disabled={changeStatus.isPending || (student.accountStatus !== 'SUSPENDED' && !reason.trim())}
+                onClick={() => changeStatus.mutate({ id: student.id, status: student.accountStatus === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED', reason }, { onSuccess: () => { setConfirmStatus(false); setReason(''); } })}>
+                Confirm
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setConfirmStatus(false)}>Cancel</Button>
+            </div>
+            {changeStatus.isError && <p className="text-xs text-danger">{changeStatus.error.message}</p>}
+          </div>
+        )}
+        {approvalOpen && (
+          <div className="mb-3 min-w-60 space-y-2 rounded-lg border border-border p-3">
+            <p className="text-xs font-semibold">CollegeBook access approval</p>
+            <p className="text-xs text-text-secondary">
+              {student.registryApproved === false
+                ? 'Restore approval. A suspended login account still requires reactivation.'
+                : 'Withdraw approval to suspend CollegeBook access immediately. The YearBook record stays intact.'}
+            </p>
+            {student.registryApproved !== false && (
+              <textarea value={approvalReason} maxLength={500}
+                onChange={(event) => setApprovalReason(event.target.value)}
+                placeholder="Reason for withdrawing approval" aria-label="Withdrawal reason"
+                className="w-full rounded-md border border-border bg-surface p-2 text-xs" />
+            )}
+            <div className="flex gap-2">
+              <Button type="button" disabled={updateApproval.isPending || (student.registryApproved !== false && !approvalReason.trim())}
+                onClick={() => updateApproval.mutate({
+                  id: student.id,
+                  payload: {
+                    approved: student.registryApproved === false,
+                    reason: approvalReason,
+                  },
+                }, { onSuccess: () => { setApprovalOpen(false); setApprovalReason(''); } })}>
+                Save approval
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setApprovalOpen(false)}>Cancel</Button>
+            </div>
+            {updateApproval.isError && <p className="text-xs text-danger">{updateApproval.error.message}</p>}
+          </div>
+        )}
         {editing ? (
           <div className="flex gap-2">
             <Button type="button" onClick={save} disabled={updateStudent.isPending}>Save</Button>
             <Button type="button" variant="secondary" onClick={() => setEditing(false)}>Cancel</Button>
           </div>
         ) : (
-          <Button type="button" variant="secondary" onClick={() => setEditing(true)}>Edit</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={() => setEditing(true)}>Edit</Button>
+            <Button type="button" variant="secondary" onClick={() => setApprovalOpen(true)}>
+              {student.registryApproved === false ? 'Restore approval' : 'CollegeBook access'}
+            </Button>
+            {student.accountStatus && student.accountStatus !== 'BANNED' && (
+              <Button type="button" variant="secondary" onClick={() => setConfirmStatus(true)}>
+                {student.accountStatus === 'SUSPENDED' ? 'Reactivate' : 'Deactivate'}
+              </Button>
+            )}
+          </div>
         )}
       </td>
     </tr>
   );
 }
 
+
+function AutomaticAccessSettings() {
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-6">
+      <h2 className="text-lg font-semibold text-text">Institution-controlled CollegeBook access</h2>
+      <p className="mt-2 text-sm text-text-secondary">
+        Student accounts never expire because of graduation, inactivity, or elapsed time.
+        When you explicitly withdraw a student's institution approval, their CollegeBook
+        login and access are suspended immediately. Their YearBook entry is retained.
+        To restore access, restore approval first, then select Reactivate.
+      </p>
+      <p className="mt-2 text-xs text-text-secondary">
+        Missing rows in a later student CSV upload do not withdraw approval.
+      </p>
+    </section>
+  );
+}
 
 function BulkStudentUpload() {
   const departmentsQuery = useDepartments();
@@ -264,6 +356,7 @@ export default function AdminStudentsPage() {
         </p>
       </div>
 
+      <AutomaticAccessSettings />
       <AddStudentForm onCreated={() => setSubmittedQuery('')} />
 
       <BulkStudentUpload />
@@ -281,8 +374,8 @@ export default function AdminStudentsPage() {
       {studentsQuery.isError && <p className="text-sm text-danger">{studentsQuery.error.message}</p>}
 
       {studentsQuery.data?.items?.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-surface p-4 shadow-sm">
-          <table className="min-w-[950px] w-full text-left text-sm">
+        <div className="w-full min-w-0 overflow-x-auto rounded-2xl border border-border bg-surface p-3 shadow-sm sm:p-4">
+          <table className="w-full min-w-[950px] text-left text-sm">
             <thead>
               <tr className="border-b border-border text-text-secondary">
                 <th className="pb-3 pr-4 font-medium">Student</th>
